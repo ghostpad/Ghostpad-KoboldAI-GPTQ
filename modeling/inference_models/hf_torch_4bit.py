@@ -36,6 +36,7 @@ from gptq.llama import load_quant as llama_load_quant
 from gptq.opt import load_quant as opt_load_quant
 from gptq.bigcode import load_quant as bigcode_load_quant
 from gptq.mpt import load_quant as mpt_load_quant
+from gptq.rw import load_quant as rw_load_quant
 from gptq.offload import load_quant_offload
 
 
@@ -381,6 +382,8 @@ class HFTorch4BitInferenceModel(HFTorchInferenceModel):
             model = load_quant_offload(mpt_load_quant, utils.koboldai_vars.custmodpth, path_4bit, utils.koboldai_vars.gptq_bits, groupsize, self.gpu_layers_list)
         elif utils.koboldai_vars.model_type == "gpt_bigcode":
             model = load_quant_offload(bigcode_load_quant, utils.koboldai_vars.custmodpth, path_4bit, utils.koboldai_vars.gptq_bits, groupsize, self.gpu_layers_list).half()
+        elif utils.koboldai_vars.model_type == "RefinedWebModel":
+            model = load_quant_offload(rw_load_quant, utils.koboldai_vars.custmodpth, path_4bit, utils.koboldai_vars.gptq_bits, groupsize, self.gpu_layers_list)
         else:
             raise RuntimeError(f"4-bit load failed. Model type {utils.koboldai_vars.model_type} not supported in 4-bit")
 
