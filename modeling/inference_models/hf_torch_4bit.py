@@ -114,17 +114,17 @@ def get_gptq_version(fpath):
     v2 = all([s in data for s in v3_strings])
 
     if v2:
-        if v0 or v1:
-            logger.warning(f"GPTQ model identified as v2, but v0={v0} and v1={v1}")
-        return 2
+        if v0:
+            logger.warning(f"GPTQ model identified as v2, but v0={v0}")
+        return 2, v1
     if v1:
         if v0 or v2:
             logger.warning(f"GPTQ model identified as v1, but v0={v0} and v2={v2}")
-        return 1
+        return 1, False
     if v0:
         if v1 or v2:
             logger.warning(f"GPTQ model identified as v0, but v1={v1} and v2={v2}")
-        return 0
+        return 0, False
 
 
 class HFTorch4BitInferenceModel(HFTorchInferenceModel):
@@ -360,27 +360,28 @@ class HFTorch4BitInferenceModel(HFTorchInferenceModel):
         groupsize = utils.koboldai_vars.gptq_groupsize
 
         path_4bit, legacy_groupsize = prepare_4bit_load(utils.koboldai_vars.custmodpth)
+        v2_bias = False
 
         if utils.koboldai_vars.gptq_version < 0:
-            utils.koboldai_vars.gptq_version = get_gptq_version(path_4bit)
+            utils.koboldai_vars.gptq_version, v2_bias = get_gptq_version(path_4bit)
         gptq.modelutils.set_gptq_version(utils.koboldai_vars.gptq_version)
 
         if legacy_groupsize is not False:
             groupsize = legacy_groupsize
 
-        logger.info(f"Using GPTQ file: {path_4bit}, {utils.koboldai_vars.gptq_bits}-bit model, type {utils.koboldai_vars.model_type}, version {utils.koboldai_vars.gptq_version}, groupsize {groupsize}")
+        logger.info(f"Using GPTQ file: {path_4bit}, {utils.koboldai_vars.gptq_bits}-bit model, type {utils.koboldai_vars.model_type}, version {utils.koboldai_vars.gptq_version}{' (with bias)' if v2_bias else ''}, groupsize {groupsize}")
         if utils.koboldai_vars.model_type == "gptj":
-            model = load_quant_offload(gptj_load_quant, utils.koboldai_vars.custmodpth, path_4bit, utils.koboldai_vars.gptq_bits, groupsize, self.gpu_layers_list)
+            model = load_quant_offload(gptj_load_quant, utils.koboldai_vars.custmodpth, path_4bit, utils.koboldai_vars.gptq_bits, groupsize, self.gpu_layers_list, force_bias=v2_bias)
         elif utils.koboldai_vars.model_type == "gpt_neox":
-            model = load_quant_offload(gptneox_load_quant, utils.koboldai_vars.custmodpth, path_4bit, utils.koboldai_vars.gptq_bits, groupsize, self.gpu_layers_list)
+            model = load_quant_offload(gptneox_load_quant, utils.koboldai_vars.custmodpth, path_4bit, utils.koboldai_vars.gptq_bits, groupsize, self.gpu_layers_list, force_bias=v2_bias)
         elif utils.koboldai_vars.model_type == "llama":
-            model = load_quant_offload(llama_load_quant, utils.koboldai_vars.custmodpth, path_4bit, utils.koboldai_vars.gptq_bits, groupsize, self.gpu_layers_list)
+            model = load_quant_offload(llama_load_quant, utils.koboldai_vars.custmodpth, path_4bit, utils.koboldai_vars.gptq_bits, groupsize, self.gpu_layers_list, force_bias=v2_bias)
         elif utils.koboldai_vars.model_type == "opt":
-            model = load_quant_offload(opt_load_quant, utils.koboldai_vars.custmodpth, path_4bit, utils.koboldai_vars.gptq_bits, groupsize, self.gpu_layers_list)
+            model = load_quant_offload(opt_load_quant, utils.koboldai_vars.custmodpth, path_4bit, utils.koboldai_vars.gptq_bits, groupsize, self.gpu_layers_list, force_bias=v2_bias)
         elif utils.koboldai_vars.model_type == "mpt":
-            model = load_quant_offload(mpt_load_quant, utils.koboldai_vars.custmodpth, path_4bit, utils.koboldai_vars.gptq_bits, groupsize, self.gpu_layers_list)
+            model = load_quant_offload(mpt_load_quant, utils.koboldai_vars.custmodpth, path_4bit, utils.koboldai_vars.gptq_bits, groupsize, self.gpu_layers_list, force_bias=v2_bias)
         elif utils.koboldai_vars.model_type == "gpt_bigcode":
-            model = load_quant_offload(bigcode_load_quant, utils.koboldai_vars.custmodpth, path_4bit, utils.koboldai_vars.gptq_bits, groupsize, self.gpu_layers_list).half()
+            model = load_quant_offload(bigcode_load_quant, utils.koboldai_vars.custmodpth, path_4bit, utils.koboldai_vars.gptq_bits, groupsize, self.gpu_layers_list, force_bias=v2_bias).half()
         else:
             raise RuntimeError(f"4-bit load failed. Model type {utils.koboldai_vars.model_type} not supported in 4-bit")
 
