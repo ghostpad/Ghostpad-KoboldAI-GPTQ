@@ -611,7 +611,7 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 utils.flask_app = app
 
 Compress(app)
-socketio = SocketIO(app, async_method="eventlet", manage_session=False, cors_allowed_origins='*', max_http_buffer_size=10_000_000)
+socketio = SocketIO(app, async_method="eventlet", manage_session=True, cors_allowed_origins='*', max_http_buffer_size=10_000_000)
 #socketio = SocketIO(app, async_method="eventlet", manage_session=False, cors_allowed_origins='*', max_http_buffer_size=10_000_000, logger=logger, engineio_logger=True)
 logger.add(UI_2_log_history, serialize=True, colorize=True, enqueue=True, level="INFO")
 
@@ -6540,8 +6540,9 @@ def UI_2_edit_world_info(data):
         koboldai_vars.worldinfo_v2.add_item(data['title'], data['key'], 
                                              data['keysecondary'], data['folder'], 
                                              data['constant'], data['manual_text'], 
-                                             data['comment'], wpp=data['wpp'],
-                                             use_wpp=data['use_wpp'], object_type=data["object_type"])
+                                             data['comment'], wi_type=data["type"],
+                                             wpp=data['wpp'], use_wpp=data['use_wpp'],
+                                             object_type=data["object_type"])
         emit("delete_new_world_info_entry", {})
     else:
         logger.debug("Editting WI: {}".format(data))
