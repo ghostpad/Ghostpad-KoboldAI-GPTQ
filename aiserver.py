@@ -629,6 +629,7 @@ model_backend_code = {}
 model_backends = {}
 model_backend_module_names = {}
 model_backend_type_crosswalk = {}
+sys.path.append('./exllama')
 
 PRIORITIZED_BACKEND_MODULES = ["generic_hf_torch"]
 
